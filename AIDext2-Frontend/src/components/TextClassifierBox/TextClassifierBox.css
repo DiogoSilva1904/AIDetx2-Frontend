@@ -1,0 +1,267 @@
+.selectStyle {
+  padding: 6px 10px;
+  font-size: 13px;
+  border-radius: 8px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.cardStyle {
+  position: relative;
+  background: #fff;
+  border: 1.5px solid #4d00dd;
+  border-radius: 12px;
+  padding: 1.25rem;
+  min-height: 600px;
+  display: flex;
+  flex-direction: column;
+  cursor: text;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+
+.cardStyle--dragging {
+  border-color: #4f46e5;
+  background: #f5f4ff;
+}
+
+.drag-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+
+  background: rgba(245, 244, 255, 0.0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+
+  z-index: 10;
+  pointer-events: none;
+
+  opacity: 0;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.drag-overlay.show {
+  opacity: 1;
+  background: rgba(245, 244, 255, 0.92);
+}
+
+.ghost-placeholder {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  right: 24px;
+
+  color: #b3b3b3;
+  font-size: 18px;
+  line-height: 1.6;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.textareaStyle {
+  position: relative;
+  z-index: 2;
+
+  width: 100%;
+  min-height: 500px;
+
+  border: none;
+  outline: none;
+  resize: none;
+
+  font-size: 18px;
+  line-height: 1.6;
+
+  background: transparent;
+  color: #333;
+
+  overflow: hidden;
+}
+
+.drag-overlay-icon {
+  font-size: 32px;
+}
+
+.drag-overlay-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4f46e5;
+}
+
+.textareaStyle {
+  flex: 0 0 auto;
+  border: none;
+  outline: none;
+  resize: none;
+  font-size: 18px;
+  color: #333;
+  background: transparent;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  line-height: 1.6;
+  font-family: inherit;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* Upload hint shown when card is empty */
+.card-upload-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: line;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.dividerLine {
+  flex: 1;
+  height: 1px;
+  background: #e5e5e5;
+}
+
+.pasteBtnStyle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 8px;
+  background: #4f46e5;
+  border: none;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pasteBtnStyle:hover {
+  background: #4338ca;
+}
+
+.scanBtnStyle {
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  color: #333;
+  transition: background 0.15s;
+}
+
+.scanBtnStyle:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.result-text-box {
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  min-height: 220px;
+  font-size: 15px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  border: 0.5px solid;
+}
+.result-ai    { background: #FCEBEB; border-color: #F09595; color: #501313; }
+.result-human { background: #EAF3DE; border-color: #97C459; color: #173404; }
+
+.metrics-panel {
+  background: #fff;
+  border: 0.5px solid #e0e0e0;
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 0;
+}
+.metrics-header {
+  padding: 1rem 1.5rem 0.75rem;
+  border-bottom: 0.5px solid #e0e0e0;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #888;
+}
+.metric-row { padding: 1rem 1.5rem; border-bottom: 0.5px solid #f0f0f0; }
+.metric-row:last-child { border-bottom: none; }
+.metric-label { font-size: 12px; color: #888; margin-bottom: 6px; }
+.metric-value { font-size: 24px; font-weight: 500; }
+
+.label-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 999px; font-size: 14px; font-weight: 500; }
+.badge-ai    { background: #FCEBEB; color: #A32D2D; }
+.badge-human { background: #EAF3DE; color: #3B6D11; }
+
+.label-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.dot-ai    { background: #E24B4A; }
+.dot-human { background: #639922; }
+
+.confidence-bar-bg   { height: 6px; border-radius: 3px; background: #f0f0f0; margin-top: 8px; overflow: hidden; }
+.confidence-bar-fill { height: 100%; border-radius: 3px; transition: width 0.6s ease; }
+.bar-ai    { background: #E24B4A; }
+.bar-human { background: #639922; }
+
+.rescanBtnStyle { background: none; border: none; font-size: 12px; color: #555; cursor: pointer; }
+.rescanBtnStyle:hover { color: #000; }
+
+.result-text-box {
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  min-height: 220px;
+  font-size: 18px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  border: 0.5px solid #e0e0e0;  /* neutral border always */
+  background: transparent;       /* no background on the box */
+}
+
+.highlight-ai {
+  background-color: rgba(226, 75, 74, 0.18);
+  border-radius: 4px;
+  padding: 1px 0;
+}
+
+.highlight-human {
+  background-color: rgba(99, 153, 34, 0.18);
+  border-radius: 4px;
+  padding: 1px 0;
+}
+
+/* Hybrid highlight — amber/orange, same pattern as ai/human */
+.highlight-hybrid {
+  background-color: rgba(240, 165, 0, 0.18);
+  border-bottom: 2px solid rgba(240, 165, 0, 0.6);
+  border-radius: 2px;
+  transition: background-color 0.15s;
+}
+.highlight-hybrid:hover {
+  background-color: rgba(240, 165, 0, 0.32);
+}
+ 
+/* Verdict badge for hybrid */
+.badge-hybrid {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  background: rgba(240, 165, 0, 0.15);
+  color: #f0a500;
+}
+.dot-hybrid {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #f0a500;
+  flex-shrink: 0;
+}
+ 

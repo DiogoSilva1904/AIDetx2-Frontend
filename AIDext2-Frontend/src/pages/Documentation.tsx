@@ -1,0 +1,384 @@
+import { useEffect, useState } from 'react'
+import './Documentation.css'
+
+interface NavItem {
+  id: string
+  label: string
+  icon: string
+}
+
+const navGroups: { label: string; items: NavItem[] }[] = [
+  {
+    label: 'Overview',
+    items: [{ id: 'overview', label: 'Introduction', icon: 'ti-home' }],
+  },
+  {
+    label: 'The tool',
+    items: [
+      { id: 'tool', label: 'How it works', icon: 'ti-scan' },
+      { id: 'window', label: 'Window modes', icon: 'ti-layout-columns' },
+    ],
+  },
+  {
+    label: 'Features',
+    items: [
+      { id: 'app-features', label: 'App features', icon: 'ti-sparkles' },
+    ],
+  },
+  {
+    label: 'Resources',
+    items: [{ id: 'github', label: 'GitHub', icon: 'ti-brand-github' }],
+  },
+]
+
+const appFeatures = [
+  {
+    icon: 'ti-highlight',
+    name: 'Segment highlighting',
+    desc: 'Each text segment is highlighted in-place — red for AI, green for human — with hover tooltips showing per-block details.(change colors later?????)',
+  },
+  {
+    icon: 'ti-gauge',
+    name: 'Confidence gauge',
+    desc: 'An animated gauge shows the document-level confidence score derived from the average of all block predictions.',
+  },
+  {
+    icon: 'ti-upload',
+    name: 'File upload',
+    desc: 'Drag and drop or upload .txt, .docx and .pdf files. Text is extracted and loaded directly into the scanner.',
+  },
+  {
+    icon: 'ti-cpu',
+    name: 'Model selection',
+    desc: 'Choose between multiple detection models. Switching models clears the previous result so comparisons are always fresh.',
+  },
+  {
+    icon: 'ti-toggle-left',
+    name: 'Window mode toggle',
+    desc: 'Switch between character and word windowing at any time. Changing mode resets both the result and the input text.',
+  },
+  {
+    icon: 'ti-robot',
+    name: 'Generator attribution',
+    desc: 'For supported models, the most common generator (GPT-4, Gemini, etc.) is identified from AI-flagged chunks and shown in the analysis panel.',
+  },
+]
+
+const extractedFeatures = [
+  {
+    label: 'label',
+    desc: 'Binary classification result — AI or Human — for the block.',
+  },
+  {
+    label: 'score',
+    desc: 'Confidence in the predicted label, expressed as a float between 0 and 1.',
+  },
+  {
+    label: 'start / end',
+    desc: 'Character offsets into the original text.',
+  },
+  {
+    label: 'gen_model',
+    desc: 'The generating model identified for the block.',
+  },
+  {
+    label: 'chunk_index / total_chunks',
+    desc: 'Position of this block within the full sliding window sequence.',
+  },
+]
+
+export default function Documentation() {
+    const [activeId, setActiveId] = useState('overview')
+
+    useEffect(() => {
+        // 1. Define the observer to watch section visibility
+        const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+            // If a section is in view (intersecting), set it as active
+            // threshold: 0.5 means when 50% of the section is visible
+            if (entry.isIntersecting) {
+                setActiveId(entry.target.id)
+            }
+            })
+        },
+        { rootMargin: '-20% 0% -35% 0%', threshold: 0.2 }
+        )
+
+        // 2. Observe all sections that have an ID
+        const sections = document.querySelectorAll('.docs-section')
+        sections.forEach((section) => observer.observe(section))
+
+        return () => {
+        sections.forEach((section) => observer.unobserve(section))
+        }
+    }, [])
+    return (
+        <div className="docs-shell">
+        <aside className="docs-sidebar">
+            {navGroups.map((group) => (
+            <div className="docs-nav-group" key={group.label}>
+                <div className="docs-nav-group-label">{group.label}</div>
+
+                {group.items.map((item) => (
+                <a
+                    key={item.id}
+                    href={`#${item.id}`}
+                    className={`docs-nav-item ${activeId === item.id ? 'active' : ''}`}
+                >
+                    <i className={`ti ${item.icon}`} aria-hidden="true" />
+                    {item.label}
+                </a>
+                ))}
+            </div>
+            ))}
+        </aside>
+
+        <main className="docs-main">
+
+            {/* ───────────────── Overview ───────────────── */}
+
+            <section className="docs-section" id="overview">
+            <div className="docs-eyebrow">Getting started</div>
+
+            <h1 className="docs-title">Introduction</h1>
+
+            <p className="docs-lead">
+                AIDext2 is an AI-generated text detection platform designed
+                to analyze and classify written content.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <h2 className="docs-h2">What does it do?</h2>
+
+            <p className="docs-prose">
+                AIDext2 analyzes text to determine whether it was written
+                by a human or generated by an AI model. When AI-generated
+                content is detected, the platform can also identify the
+                most likely model responsible for generating the text.
+            </p>
+
+            <p className="docs-prose">
+                The analysis is performed at both segment and document levels.
+                Using a sliding window approach, the system evaluates smaller
+                portions of the text independently, allowing for more accurate
+                detection of mixed or partially AI-generated content.
+            </p>
+
+            <p className="docs-prose">
+                AIDext2 supports multiple detection models, configurable
+                windowing modes based on characters or words, and provides
+                confidence scores for each analyzed segment alongside the
+                final document-level prediction.
+            </p>
+            </section>
+
+            {/* ───────────────── Tool ───────────────── */}
+
+            <section className="docs-section" id="tool">
+            <div className="docs-eyebrow">The tool</div>
+
+            <h1 className="docs-title">How it works</h1>
+
+            <p className="docs-lead">
+                AIDext2 analyzes text through a multi-stage detection pipeline
+                that combines segment-level predictions into a final document
+                classification.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <h2 className="docs-h2">Detection pipeline</h2>
+
+            <p className="docs-prose">
+                When a document is submitted, the text first goes through
+                a preprocessing stage where formatting inconsistencies,
+                spacing issues, and unsupported characters are normalized.
+            </p>
+
+            <p className="docs-prose">
+                After preprocessing, the document is divided into smaller
+                overlapping segments using a sliding window approach.
+                For each segment, statistical, linguistic, and stylometric
+                features are extracted and analyzed by the selected
+                detection model.
+            </p>
+
+            <p className="docs-prose">
+                The predictions generated for each segment are then aggregated
+                to produce a document-level classification, improving overall
+                detection stability and robustness.
+            </p>
+
+            <div className="docs-pipeline">
+                <h1>missing pipeline diagram(?)</h1>
+            </div>
+            </section>
+
+            {/* ───────────────── Window ───────────────── */}
+
+            <section className="docs-section" id="window">
+
+            <h1 className="docs-title">Sliding Window Segmentation</h1>
+
+            <p className="docs-lead">
+                AIDext2 uses an overlapping sliding window strategy to divide documents into
+                smaller text segments that can be analyzed independently by the detection models.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <p className="docs-prose">
+                Instead of processing an entire document as a single input, the text is split
+                into multiple overlapping blocks. Each block is independently analyzed, allowing
+                the system to detect localized AI-generated patterns across different regions of
+                the document.
+            </p>
+
+
+            <p className="docs-prose">
+                This approach is particularly useful for identifying hybrid documents that contain
+                both human-written and AI-generated content. By analyzing smaller segments
+                independently, AIDext2 can detect isolated AI-generated regions even when they
+                are embedded within predominantly human-written text.
+            </p>
+
+            <p className="docs-prose">
+                The overlap between consecutive blocks is controlled through a configurable
+                stride value. This overlap helps reduce boundary effects, improves contextual
+                continuity between segments, and increases the stability of the final prediction.
+            </p>
+
+            <p className="docs-prose">
+                AIDext2 supports two segmentation modes: a word-based sliding window and a
+                character-based sliding window. Depending on the selected mode and the size
+                of the submitted document, the system automatically determines the most
+                appropriate window size and stride configuration.
+            </p>
+
+            <p className="docs-prose">
+                Smaller documents may be processed as a single segment, while larger documents
+                are divided into multiple overlapping windows to improve detection accuracy
+                and provide more detailed segment-level analysis.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <div className="docs-feature-grid">
+            <div className="docs-feature-card">
+                <div className="docs-feature-icon">
+                <i className="ti ti-text-size" />
+                </div>
+
+                <div className="docs-feature-name">
+                Character mode
+                </div>
+
+                <div className="docs-feature-desc">
+                <br />
+                <strong>Behavior:</strong><br />
+                • &lt; 1,000 chars → single prediction<br />
+                • 1,000–4,999 → block 500 / stride 250<br />
+                • 5,000–14,999 → block 750 / stride 375<br />
+                • 15,000+ → block 1,000 / stride 500
+                </div>
+            </div>
+
+            <div className="docs-feature-card">
+                <div className="docs-feature-icon">
+                <i className="ti ti-align-left" />
+                </div>
+
+                <div className="docs-feature-name">
+                Word mode
+                </div>
+
+                <div className="docs-feature-desc">
+                <br />
+                <strong>Behavior:</strong><br />
+                • &lt; 200 words → single prediction<br />
+                • 200–999 → block 100 / stride 50<br />
+                • 1,000–2,999 → block 150 / stride 75<br />
+                • 3,000+ → block 200 / stride 100
+                </div>
+            </div>
+            </div>
+            </section>
+
+            {/* ───────────────── App Features ───────────────── */}
+
+            <section className="docs-section" id="app-features">
+            <div className="docs-eyebrow">Features</div>
+
+            <h1 className="docs-title">App features</h1>
+
+            <p className="docs-lead">
+                Everything available in the interface.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <div className="docs-feature-grid">
+                {appFeatures.map((f) => (
+                <div className="docs-feature-card" key={f.name}>
+                    <div className="docs-feature-icon">
+                    <i className={`ti ${f.icon}`} />
+                    </div>
+
+                    <div className="docs-feature-name">
+                    {f.name}
+                    </div>
+
+                    <div className="docs-feature-desc">
+                    {f.desc}
+                    </div>
+                </div>
+                ))}
+            </div>
+            </section>
+
+            {/* ───────────────── GitHub ───────────────── */}
+
+            <section className="docs-section" id="github">
+            <div className="docs-eyebrow">Resources</div>
+
+            <h1 className="docs-title">GitHub</h1>
+
+            <p className="docs-lead">
+                Source code, issues, and contributions.
+            </p>
+
+            <hr className="docs-divider" />
+
+            <div className="docs-github-card">
+                <div className="docs-github-left">
+                <i className="ti ti-brand-github docs-github-icon" />
+
+                <div>
+                    <div className="docs-github-title">
+                    your-org / appname
+                    </div>
+
+                    <div className="docs-github-sub">
+                    Replace with your actual repository URL
+                    </div>
+                </div>
+                </div>
+
+                <a
+                href="https://github.com"
+                className="docs-github-btn"
+                target="_blank"
+                rel="noreferrer"
+                >
+                <i className="ti ti-external-link" />
+                View repo
+                </a>
+            </div>
+            </section>
+
+        </main>
+        </div>
+    )
+}
