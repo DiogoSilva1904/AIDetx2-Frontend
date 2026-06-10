@@ -3,7 +3,7 @@ import './TextClassifierBox.css'
 import ModelModal from "../ModelModal/ModelModal.tsx";
 import { API } from "../../api.tsx"
 import GaugeComponent from 'react-gauge-component';
-import SegmentTooltip from "../SegmentTooltip/SegmentTooltip";
+//import SegmentTooltip from "../SegmentTooltip/SegmentTooltip";
 
 const MAX_CHARS = 12000;
 const MIN_WORDS = 10;
@@ -59,6 +59,7 @@ interface TextSegment {
 
 function parseSegments(text: string, results: ChunkResult[], windowSize: number): TextSegment[] {
   if (!results.length) return [];
+  console.log(windowSize)
 
   return results
     .map((chunk, i) => {
@@ -120,6 +121,9 @@ export default function TextScanner() {
   const [windowMode, setWindowMode] = useState<"chars" | "words">("chars");
 
   const canScan = wordCount >= MIN_WORDS && selectedModel !== null;
+
+  const showModel = showModelWarning;
+  console.log(showModel)
 
   //const segments = scanResponse ? parseSegments(text, scanResponse.results, scanResponse.window_size) : [];
   const segments = scanResponse && text.length > 0
@@ -195,10 +199,10 @@ export default function TextScanner() {
     }
   }
 
-  function handleRescan() {
+  /*function handleRescan() {
     setScanResponse(null);
     setText("");
-  }
+  }*/
 
   return (
     <div style={{ fontFamily: "sans-serif", maxWidth: 1700, margin: "0 auto", padding: "1.5rem" }}>

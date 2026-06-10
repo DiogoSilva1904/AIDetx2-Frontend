@@ -64,7 +64,7 @@ const appFeatures = [
   },
 ]
 
-const extractedFeatures = [
+/*const extractedFeatures = [
   {
     label: 'label',
     desc: 'Binary classification result — AI or Human — for the block.',
@@ -85,7 +85,7 @@ const extractedFeatures = [
     label: 'chunk_index / total_chunks',
     desc: 'Position of this block within the full sliding window sequence.',
   },
-]
+]*/
 
 export default function Documentation() {
     const [activeId, setActiveId] = useState('overview')

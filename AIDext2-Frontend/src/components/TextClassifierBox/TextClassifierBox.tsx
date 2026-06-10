@@ -118,6 +118,10 @@ export default function TextScanner() {
   const [showModelWarning, setShowModelWarning] = useState(false);
   const [windowMode, setWindowMode] = useState<"chars" | "words">("chars");
 
+
+  const showModel = showModelWarning;
+  console.log(showModel)
+  
   const canScan = wordCount >= MIN_WORDS && selectedModel !== null;
 
   // Apply hybrid re-labelling before parsing segments
