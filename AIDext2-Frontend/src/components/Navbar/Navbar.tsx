@@ -21,7 +21,7 @@ export default function Navbar() {
       <div className="navbar-inner">
 
         <a href="/" className="navbar-logo">
-          AIDext<span className="navbar-logo-accent">2</span>
+          AIDetx<span className="navbar-logo-accent">2</span>
         </a>
 
         <div className="navbar-links">

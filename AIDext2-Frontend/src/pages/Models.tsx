@@ -81,7 +81,7 @@ export default function Models(){
             <h1 className="docs-title">Models</h1>
 
             <p className="docs-lead">
-                AIDext2 offers different various depending in which the use case scenario is. 
+                AIDetx2 offers different various depending in which the use case scenario is. 
                 There are 3 models: AI vs Human which allows to detect if a text is of Human or AI origin; 
                 Model Detection that given an AI text, it detects which model detected it; 
                 Human vs AI and Model Detection is a pipeline combining both the previous models doing both
