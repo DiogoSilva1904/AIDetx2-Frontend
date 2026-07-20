@@ -1,0 +1,7 @@
+{
+  "threshold": 0.1,
+  "temp_weight": 1.0,
+  "model_name": "bert-base-uncased",
+  "dropout": 0.3,
+  "max_length": 512
+}

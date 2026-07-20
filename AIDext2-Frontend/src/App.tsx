@@ -7,10 +7,12 @@ import Models from './pages/Models'
 
 
 
+
+
 function App() {
   return (
-    <BrowserRouter>
-      <Navbar />
+    <BrowserRouter basename="/AIDext2-Frontend/">
+      <Navbar/>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/docs" element={<Documentation />} />

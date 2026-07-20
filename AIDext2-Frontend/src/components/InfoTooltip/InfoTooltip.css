@@ -1,0 +1,41 @@
+.info-tooltip-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 16px;
+    height: 16px;
+
+    border-radius: 50%;
+    border: 1px solid #bbb;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    color: #777;
+    cursor: help;
+    transition: .15s;
+    margin-left: 5px;
+}
+
+.info-tooltip-icon:hover {
+    color: #4f46e5;
+    border-color: #4f46e5;
+}
+
+.info-tooltip-popup {
+    max-width: 260px;
+
+    background: #2b2b2b;
+    color: white;
+
+    padding: 10px 12px;
+    border-radius: 8px;
+
+    font-size: 12px;
+    line-height: 1.5;
+
+    box-shadow: 0 8px 25px rgba(0,0,0,.2);
+
+    z-index: 9999;
+}

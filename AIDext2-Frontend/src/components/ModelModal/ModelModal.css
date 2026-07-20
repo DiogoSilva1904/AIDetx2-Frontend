@@ -197,3 +197,24 @@
   color: #4f46e5;
   font-weight: 700;
 }
+
+.model-card--disabled {
+  opacity: 0.45;
+  filter: grayscale(100%);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.model-card--disabled:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: #ddd;
+}
+
+.coming-soon {
+  margin-top: 18px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  font-style: italic;
+}

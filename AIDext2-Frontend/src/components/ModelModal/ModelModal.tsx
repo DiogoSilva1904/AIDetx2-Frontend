@@ -109,8 +109,15 @@ export default function ModelModal({ currentModel, onSelect }: ModelModalProps) 
               {filteredModels.map((model) => (
                 <div
                   key={model.id}
-                  className={`model-card ${selected === model.id ? "model-card--selected" : ""}`}
-                  onClick={() => handleSelect(model.id,model.category)}
+                  className={`model-card ${
+                    category === "ml" && selected === model.id
+                      ? "model-card--selected"
+                      : ""
+                  } ${category === "dl" ? "model-card--disabled" : ""}`}
+                  onClick={category === "ml"
+                    ? () => handleSelect(model.id, model.category)
+                    : undefined
+                  }
                 >
                   <div className="model-card-top">
                     <span className="model-card-name">{model.name}</span>
@@ -121,12 +128,18 @@ export default function ModelModal({ currentModel, onSelect }: ModelModalProps) 
                     )}
                   </div>
                   <p className="model-card-desc">{model.description}</p>
-                  {selected === model.id && (
+                  {category === "ml" && selected === model.id && (
                     <span className="model-card-check">✓</span>
                   )}
                 </div>
               ))}
             </div>
+
+            {category === "dl" && (
+              <div className="coming-soon">
+                🚀 Deep Learning models are coming soon.
+              </div>
+            )}
 
           </div>
         </div>
