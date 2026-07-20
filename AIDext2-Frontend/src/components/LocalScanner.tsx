@@ -144,8 +144,8 @@ export class LocalScanner {
           console.log("Loading ONNX model...");
           //await this.classifier.load();
           await Promise.all([
-            this.binaryClassifier.load("/AIDext2-Frontend/binary_model_no_pos_zipmap.onnx"),
-            this.modelClassifier.load("/AIDext2-Frontend/ai_model_no_pos_zipmap.onnx"),
+            this.binaryClassifier.load("/AIDetx2-Frontend/binary_model_no_pos_zipmap.onnx"),
+            this.modelClassifier.load("/AIDetx2-Frontend/ai_model_no_pos_zipmap.onnx"),
         ]);
           console.log("ONNX ready");
 

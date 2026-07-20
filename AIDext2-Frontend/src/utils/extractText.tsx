@@ -2,7 +2,7 @@ import mammoth from "mammoth";
 import * as pdfjsLib from "pdfjs-dist";
 
 // Required for pdf.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = "/AIDext2-Frontend/pdf.worker.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "/AIDetx2-Frontend/pdf.worker.min.mjs";
 
 interface TextItem {
     x: number;

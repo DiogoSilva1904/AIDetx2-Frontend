@@ -31,7 +31,7 @@ export class ONNXClassifier {
         console.log("Output names:", this.session.outputNames);
     } */
 
-    async load(path: string = "/AIDext2-Frontend/binary_model_no_pos_zipmap.onnx") {
+    async load(path: string = "/AIDetx2-Frontend/binary_model_no_pos_zipmap.onnx") {
         //ort.env.wasm.wasmPaths = "/AIDext2-Frontend/";
         this.session = await ort.InferenceSession.create(path, {
             executionProviders: ["wasm"]
