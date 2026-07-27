@@ -380,3 +380,21 @@ html {
   color: var(--text);
   font-weight: 500;
 }
+
+.docs-nav-subgroup {
+  margin-left: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.docs-nav-subitem {
+  font-size: 0.85rem;
+  padding: 0.25rem 0;
+  color: var(--text-muted, #888);
+  text-decoration: none;
+}
+
+.docs-nav-subitem.active {
+  color: var(--accent, #6366f1);
+  font-weight: 600;
+}

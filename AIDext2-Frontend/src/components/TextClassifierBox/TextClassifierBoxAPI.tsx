@@ -6,6 +6,7 @@ import ConfidenceGauge from "../ConfidenceGauge/ConfidenceGauge.tsx";
 import SegmentTooltip from "../SegmentTooltip/SegmentTooltip";
 import InfoTooltip from "../InfoTooltip/InfoTooltip.tsx";
 import ChunkModal from "../ChunkModal/ChunkModal";
+import { PieChart} from "@mui/x-charts/PieChart";
 
 const MAX_CHARS = 100000;
 const MIN_WORDS = 10;
@@ -106,32 +107,99 @@ function getModelColor(model: string): string {
     .filter(Boolean) as TextSegment[];
 } */
 
+function isBoundary(char: string): boolean {
+    return /\s/.test(char) || /[.,!?;:()[\]{}"'`]/.test(char);
+}
+
+function snapToWordBoundary(text: string, pos: number): number {
+    if (pos <= 0) return 0;
+    if (pos >= text.length) return text.length;
+
+    // Already at a boundary
+    if (isBoundary(text[pos])) return pos;
+
+    let left = pos;
+    let right = pos;
+
+    while (left > 0 || right < text.length) {
+        if (left > 0) {
+            left--;
+            if (isBoundary(text[left])) {
+                return left + 1;
+            }
+        }
+
+        if (right < text.length - 1) {
+            right++;
+            if (isBoundary(text[right])) {
+                return right + 1;
+            }
+        }
+    }
+
+    return pos;
+}
+
 function parseSegments(text: string, results: ChunkResult[]): TextSegment[] {
-  if (!results.length) return [];
+    if (!results.length) return [];
 
-  return results.map((chunk, i) => {
-    const start = chunk.start;
-    const end   = Math.min(chunk.end, text.length);
+    const segments: TextSegment[] = [];
 
-    const label: "AI" | "Human" | "Hybrid" =
-      chunk.probai    > HYBRID_HIGH ? "AI"    :
-      chunk.probhuman > HYBRID_HIGH ? "Human" :
-      "Hybrid";
+    let previousEnd = 0;
 
-    return {
-      text:        text.slice(start, end),
-      label,
-      probai:      chunk.probai,
-      probhuman:   chunk.probhuman,
-      probmodel:   chunk.probmodel,
-      features:    chunk.features,
-      gen_model:   chunk.gen_model,
-      start,
-      end,
-      chunkIndex:  i + 1,
-      totalChunks: results.length,
-    };
-  }).filter(s => s.text.trim().length > 0);
+    for (let i = 0; i < results.length; i++) {
+        const chunk = results[i];
+
+        const label: "AI" | "Human" | "Hybrid" =
+            chunk.probai > HYBRID_HIGH
+                ? "AI"
+                : chunk.probhuman > HYBRID_HIGH
+                    ? "Human"
+                    : "Hybrid";
+
+        // ----- Compute display boundaries -----
+
+        const displayStart =
+            i === 0
+                ? chunk.start
+                : previousEnd;
+
+        let displayEnd: number;
+
+        if (i === results.length - 1) {
+            displayEnd = Math.min(chunk.end, text.length);
+        } else {
+            const next = results[i + 1];
+
+            // midpoint of the overlap
+            const midpoint = Math.floor((chunk.end + next.start) / 2);
+
+            // move to nearest word boundary
+            displayEnd = snapToWordBoundary(text, midpoint);
+        }
+
+        previousEnd = displayEnd;
+
+        segments.push({
+            text: text.slice(displayStart, displayEnd),
+
+            label,
+
+            probai: chunk.probai,
+            probhuman: chunk.probhuman,
+            probmodel: chunk.probmodel,
+            gen_model: chunk.gen_model,
+            features: chunk.features,
+
+            start: displayStart,
+            end: displayEnd,
+
+            chunkIndex: i + 1,
+            totalChunks: results.length,
+        });
+    }
+
+    return segments;
 }
 
 /* function deriveOverall(results: ChunkResult[]): { label: "AI" | "Human" | "Hybrid"; confidence: number } {
@@ -199,11 +267,18 @@ function deriveOverall(results: ChunkResult[]): OverallResult {
 }
 
 function deriveGenModel(results: ChunkResult[]): string | null {
+  console.log("puta")
+  console.log("results",results)
   const aiChunks = results.filter(r => r.gen_model && r.label === 1);
+  console.log("NUmber of ai chunks",aiChunks.length)
+  console.log("hello")
   if (!aiChunks.length) return null;
+  console.log("hello2")
 
+  console.log("lolololo")
   const counts: Record<string, number> = {};
   for (const chunk of aiChunks) {
+    console.log("hhhhh",chunk.gen_model!)
     const m = chunk.gen_model!;
     counts[m] = (counts[m] ?? 0) + 1;
   }
@@ -220,12 +295,22 @@ export default function TextScannerAPI() {
 
   const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
   const charCount = text.length;
-  const [selectedModel, setSelectedModel] = useState<{ id: string; category: "ml" | "dl" } | null>(null);
+  //const [selectedModel, setSelectedModel] = useState<{ id: string; category: "ml" | "dl" } | null>(null);
+  const [selectedModel, setSelectedModel] = useState<{
+    id: string;
+    category: "ml" | "dl";
+  }>({
+    id: "binary",
+    category: "ml",
+  });
   const [showModelWarning, setShowModelWarning] = useState(false);
   const [windowMode, setWindowMode] = useState<"chars" | "words">("chars");
   const [selectedSeg, setSelectedSeg] = useState<TextSegment | null>(null);
   const [chunkModalOpen, setChunkModalOpen] = useState(false);
   const [animatedGauge, setAnimatedGauge] = useState(0);
+
+  const hasResults = scanResponse !== null;
+  const canClear = text.trim().length > 0 || hasResults;
 
 
   const showModel = showModelWarning;
@@ -327,7 +412,7 @@ export default function TextScannerAPI() {
   async function handleFileChange(e: ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0];
       if (!file) return;
-      console.log("HAHAHAHAHAHAHA")
+      //console.log("HAHAHAHAHAHAHA")
 
       const ext = file.name.split(".").pop()?.toLowerCase();
 
@@ -477,18 +562,43 @@ async function handleScan() {
             ⚠ Please select a model before scanning
           </span>
         )}
-        <button
-          onClick={(e) => { e.stopPropagation(); handleScan(); }}
-          disabled={!canScan || isScanning}
-          className="scanBtnStyle"
+        <div
           style={{
-            marginLeft: "auto",   // ← pushes to right corner
-            opacity: canScan && !isScanning ? 1 : 0.4,
-            cursor: canScan && !isScanning ? "pointer" : "not-allowed",
+            marginLeft: "auto",
+            display: "flex",
+            gap: 10,
           }}
         >
-          {isScanning ? "Scanning…" : "Scan"}
-        </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRescan();
+            }}
+            disabled={!canClear}
+            className="clearBtnStyle"
+            style={{
+              opacity: canClear ? 1 : 0.4,
+              cursor: canClear ? "pointer" : "not-allowed",
+            }}
+          >
+            Clear
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleScan();
+            }}
+            disabled={!canScan || isScanning || hasResults}
+            className="scanBtnStyle"
+            style={{
+              opacity: canScan && !isScanning && !hasResults ? 1 : 0.4,
+              cursor: canScan && !isScanning && !hasResults ? "pointer" : "not-allowed",
+            }}
+          >
+            {isScanning ? "Scanning…" : "Scan"}
+          </button>
+        </div>
       </div>
 
       {scanResponse && overall && segments.length > 0 ? (
@@ -503,152 +613,256 @@ async function handleScan() {
             onSegmentSelect={setSelectedSeg}
             selectedSeg={selectedSeg}
           />
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
-          {/* Metrics panel */}
-          <div className="metrics-panel">
-            <div className="metrics-header">Analysis</div>
+            {/* Metrics panel */}
+            <div className="metrics-panel">
+              <div className="metrics-header">Analysis</div>
 
-            <div className="metric-row">
-              <div className="metric-label-row">
-                  <span className="metric-label">Verdict</span>
-                  <InfoTooltip
-                          text="The confidence represents (complete this later)?MISSING MISSING MISSING MISSING MISSING"
-                  />
-              </div>
-              <div className={`label-badge badge-${overall.label.toLowerCase()}`}>
-                <span className={`label-dot dot-${overall.label.toLowerCase()}`} />
-                {overall.label === "AI"     ? "AI-generated"
-                 : overall.label === "Hybrid" ? "Mixed content"
-                 : "Human-written"}
-              </div>
-            </div>
-
-            {(selectedModel?.id === "binary/model" || selectedModel?.id === "model") && (() => {
-              const genModel = deriveGenModel(labelledResults);
-              if (!genModel) return null;
-              const modelKey = genModel === "gpt_oss" ? "gpt" : genModel;
-              return (
-                <div className="metric-row">
-                  <div className="metric-label-row">
-                    <span className="metric-label">Generated by</span>
-                    <InfoTooltip text="..." />
-                  </div>
-                  <div className={`label-badge badge-${modelKey}`}>
-                    <span className={`label-dot dot-${modelKey}`} />
-                    {genModel}
-                  </div>
+              <div className="metric-row">
+                <div className="metric-label-row">
+                    <span className="metric-label">Verdict</span>
+                    <InfoTooltip
+                            text="The confidence represents (complete this later)?MISSING MISSING MISSING MISSING MISSING"
+                    />
                 </div>
-              );
-            })()}
+                
+                <div className={`label-badge badge-${overall.label.toLowerCase()}`}>
+                  <span className={`label-dot dot-${overall.label.toLowerCase()}`} />
+                  {overall.label === "AI"     ? "AI-generated"
+                  : overall.label === "Hybrid" ? "Mixed content"
+                  : "Human-written"}
+                </div>
+              </div>
 
-            <div className="metric-row">
-              <div className="metric-label-row">
+              {/* {(selectedModel?.id === "binary/model" || selectedModel?.id === "model") && (() => {
+                const genModel = deriveGenModel(labelledResults);
+                
+                return genModel ? (
+                  <div className="metric-row">
+                    <div className="metric-label-row">
+                        <span className="metric-label">Generated by:</span>
+                        <InfoTooltip
+                                text="The confidence represents (complete this later)?MISSING MISSING MISSING MISSING MISSING"
+                        />
+                    </div>
+                    <div className="label-badge badge-ai">
+                      <span className="label-dot dot-ai" />
+                      {genModel}
+                    </div>
+                  </div>
+                ) : null;
+              })()} */}
+
+              {(selectedModel?.id === "binary/model" || selectedModel?.id === "model") && (() => {
+                const genModel = deriveGenModel(labelledResults);
+                //console.log("ahahhahahahahaahhaahh",genModel)
+                if (!genModel) return null;
+                const modelKey = genModel === "gpt_oss" ? "gpt" : genModel;
+                return (
+                  <div className="metric-row">
+                    <div className="metric-label-row">
+                      <span className="metric-label">Generated by</span>
+                      <InfoTooltip text="..." />
+                    </div>
+                    <div className={`label-badge badge-${modelKey}`}>
+                      <span className={`label-dot dot-${modelKey}`} />
+                      {genModel}
+                    </div>
+                  </div>
+                );
+              })()}
+
+
+              <div className="metric-row">
+                <div className="metric-label-row">
                   <span className="metric-label">Confidence</span>
                   <InfoTooltip
-                          text="The confidence represents (complete this later)?MISSING MISSING MISSING MISSING MISSING"
+                    text="The confidence represents (complete this later)."
                   />
-              </div>
-              <ConfidenceGauge confidence={gaugeConfidence} />
-            </div>
-
-            <div className="metric-row">
-              <div className="metric-label-row">
-                  <span className="metric-label">Chunks</span>
-
-                  <InfoTooltip
-                      text="The text is divided into overlapping chunks before being analyzed independently. These chunk predictions are combined to produce the overall verdict and highlighted regions."
-                  />
-              </div>
-              <div className="metric-value">{scanResponse.results.length}</div>
-            </div>
-
-            {selectedModel?.id !== "model" && (
-              <>
-                <div className="metric-row">
-                  <div className="metric-label">AI chunks</div>
-                  <div className="metric-value" style={{ color: "#e05c5c" }}>
-                    {labelledResults.filter(r => r.probai > HYBRID_HIGH).length}
-                  </div>
                 </div>
 
-                {labelledResults.some(r => r.probai <= HYBRID_HIGH && r.probhuman <= HYBRID_HIGH) && (
-                  <div className="metric-row">
-                    <div className="metric-label">Hybrid chunks</div>
-                    <div className="metric-value" style={{ color: "#f0a500" }}>
-                      {labelledResults.filter(r => r.probai <= HYBRID_HIGH && r.probhuman <= HYBRID_HIGH).length}
-                    </div>
+                {/* Binary */}
+                {selectedModel?.id === "binary" && (
+                  <div className="gauge-block">
+                    <PieChart
+                      series={[
+                        {
+                          data: [
+                            {
+                              id: 0,
+                              value: overall.aiConfidence * 100,
+                              label: "AI",
+                              color: "#E24B4A",
+                            },
+                            {
+                              id: 1,
+                              value: overall.humanConfidence * 100,
+                              label: "Human",
+                              color: "#4CAF50",
+                            },
+                          ],
+                          innerRadius: 60,
+                          outerRadius: 90,
+                          startAngle: -90,
+                          endAngle: 90,
+                          cx: 180,
+                          cy: 110,
+                        },
+                      ]}
+                      width={300}
+                      height={180}
+                      sx={{
+                        "& .MuiChartsLegend-root": {
+                          transform: "translate(-20px) translateY(-20px)",
+                        },
+                      }}
+                    />
+                    <span className="gauge-block-title">AI vs Human</span>
                   </div>
                 )}
 
-                <div className="metric-row">
-                  <div className="metric-label">Human chunks</div>
-                  <div className="metric-value" style={{ color: "#4caf50" }}>
-                    {labelledResults.filter(r => r.probhuman > HYBRID_HIGH).length}
+                {/* Model */}
+                {selectedModel?.id === "model" && (
+                  <div className="gauge-block" style={{ padding: "12px 0" }}>
+                    <ConfidenceGauge confidence={overall.modelConfidence ?? 0} />
+                    <span className="gauge-block-title">Model detection</span>
+                  </div>
+                )}
+
+                {/* Binary + Model */}
+                {selectedModel?.id === "binary/model" && (
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: "100%" }}>
+                    <div className="gauge-block">
+                      <PieChart
+                        series={[
+                          {
+                            data: [
+                              {
+                                id: 0,
+                                value: overall.aiConfidence * 100,
+                                label: "AI",
+                                color: "#E24B4A",
+                              },
+                              {
+                                id: 1,
+                                value: overall.humanConfidence * 100,
+                                label: "Human",
+                                color: "#4CAF50",
+                              },
+                            ],
+                            innerRadius: 60,
+                            outerRadius: 90,
+                            startAngle: -90,
+                            endAngle: 90,
+                            cx: 180,
+                            cy: 110,
+                          },
+                        ]}
+                        width={300}
+                        height={180}
+                        sx={{
+                          "& .MuiChartsLegend-root": {
+                            transform: "translate(-20px) translateY(-20px)",
+                          },
+                        }}
+                      />
+                      <span className="gauge-block-title">AI vs Human</span>
+                    </div>
+
+                    <div className="gauge-block">
+                      <ConfidenceGauge confidence={overall.modelConfidence ?? 0} />
+                      <span className="gauge-block-title">Model detection</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="metric-row">
+                <div className="metric-label-row">
+                    <span className="metric-label">Chunks</span>
+
+                    <InfoTooltip
+                        text="The text is divided into overlapping chunks before being analyzed independently. These chunk predictions are combined to produce the overall verdict and highlighted regions."
+                    />
+                </div>
+                <div className="metric-value">{scanResponse.results.length}</div>
+              </div>
+
+              {selectedModel?.id !== "model" && (
+                <>
+                  <div className="metric-row">
+                    <div className="metric-label">AI chunks</div>
+                    <div className="metric-value" style={{ color: "#e05c5c" }}>
+                      {labelledResults.filter(r => r.probai > HYBRID_HIGH).length}
+                    </div>
+                  </div>
+
+                  {labelledResults.some(r => r.probai <= HYBRID_HIGH && r.probhuman <= HYBRID_HIGH) && (
+                    <div className="metric-row">
+                      <div className="metric-label">Hybrid chunks</div>
+                      <div className="metric-value" style={{ color: "#f0a500" }}>
+                        {labelledResults.filter(r => r.probai <= HYBRID_HIGH && r.probhuman <= HYBRID_HIGH).length}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="metric-row">
+                    <div className="metric-label">Human chunks</div>
+                    <div className="metric-value" style={{ color: "#4caf50" }}>
+                      {labelledResults.filter(r => r.probhuman > HYBRID_HIGH).length}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Window configuration */}
+              <div className="metric-row">
+                <div className="metric-label-row">
+                  <span className="metric-label">Window config</span>
+                  <InfoTooltip text="How the text was split into chunks for analysis." />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#888" }}>Type</span>
+                    <span style={{ fontWeight: 500, color: "#333" }}>{windowMode === "words" ? "Words" : "Characters"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#888" }}>Window size</span>
+                    <span style={{ fontWeight: 500, color: "#333" }}>{scanResponse.window_size} {windowMode === "words" ? "words" : "chars"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#888" }}>Stride</span>
+                    <span style={{ fontWeight: 500, color: "#333" }}>{scanResponse.stride} {windowMode === "words" ? "words" : "chars"}</span>
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <span style={{ color: "#888" }}>Overlap</span>
+                    <span style={{ fontWeight: 500, color: "#333" }}>
+                      {scanResponse.window_size - scanResponse.stride} {windowMode === "words" ? "words" : "chars"}
+                    </span>
                   </div>
                 </div>
-              </>
-            )}
-
-            {(selectedModel?.id === "binary/model" || selectedModel?.id === "model") && (() => {
-              const genModel = deriveGenModel(labelledResults);
-              return genModel ? (
-                <div className="metric-row">
-                  <div className="metric-label">Generated by</div>
-                  <div className="label-badge badge-ai">
-                    <span className="label-dot dot-ai" />
-                    {genModel}
-                  </div>
-                </div>
-              ) : null;
-            })()}
-
-            {/* Window configuration */}
-            <div className="metric-row">
-              <div className="metric-label-row">
-                <span className="metric-label">Window config</span>
-                <InfoTooltip text="How the text was split into chunks for analysis." />
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, fontSize: 13 }}>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#888" }}>Type</span>
-                  <span style={{ fontWeight: 500, color: "#333" }}>{windowMode === "words" ? "Words" : "Characters"}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#888" }}>Window size</span>
-                  <span style={{ fontWeight: 500, color: "#333" }}>{scanResponse.window_size} {windowMode === "words" ? "words" : "chars"}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#888" }}>Stride</span>
-                  <span style={{ fontWeight: 500, color: "#333" }}>{scanResponse.stride} {windowMode === "words" ? "words" : "chars"}</span>
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "#888" }}>Overlap</span>
-                  <span style={{ fontWeight: 500, color: "#333" }}>
-                    {scanResponse.window_size - scanResponse.stride} {windowMode === "words" ? "words" : "chars"}
-                  </span>
+
+              {/* Legend */}
+              <div className="metric-row" style={{ marginTop: "1rem", borderTop: "0.5px solid rgba(255,255,255,0.08)", paddingTop: "0.75rem" }}>
+                <div className="metric-label" style={{ marginBottom: 6 }}>Highlight key</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                  {[
+                    { label: "Human",  color: "#4caf50", desc: `score < ${HYBRID_LOW}` },
+                    { label: "Hybrid", color: "#f0a500", desc: `score ${HYBRID_LOW}–${HYBRID_HIGH}` },
+                    { label: "AI",     color: "#e05c5c", desc: `score > ${HYBRID_HIGH}` },
+                  ].map(({ label, color, desc }) => (
+                    <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
+                      <span style={{ color: "#fff", fontWeight: 500, minWidth: 46 }}>{label}</span>
+                      <span style={{ color: "#888" }}>{desc}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
 
-            {/* Legend */}
-            <div className="metric-row" style={{ marginTop: "1rem", borderTop: "0.5px solid rgba(255,255,255,0.08)", paddingTop: "0.75rem" }}>
-              <div className="metric-label" style={{ marginBottom: 6 }}>Highlight key</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
-                {[
-                  { label: "Human",  color: "#4caf50", desc: `score < ${HYBRID_LOW}` },
-                  { label: "Hybrid", color: "#f0a500", desc: `score ${HYBRID_LOW}–${HYBRID_HIGH}` },
-                  { label: "AI",     color: "#e05c5c", desc: `score > ${HYBRID_HIGH}` },
-                ].map(({ label, color, desc }) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}>
-                    <span style={{ width: 10, height: 10, borderRadius: 2, background: color, flexShrink: 0 }} />
-                    <span style={{ color: "#fff", fontWeight: 500, minWidth: 46 }}>{label}</span>
-                    <span style={{ color: "#888" }}>{desc}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Model detection legend — only when model or binary/model */}
+              {/* Model detection legend — only when model or binary/model */}
               {(selectedModel?.id === "model" || selectedModel?.id === "binary/model") && (() => {
                 // Get unique models that actually appeared in results
                 const detectedModels = [...new Set(
@@ -678,7 +892,8 @@ async function handleScan() {
                 );
               })()}
 
-             {selectedSeg && (
+            </div>
+              {selectedSeg && (
               <div
                 className="metrics-panel"
                 style={{ cursor: "pointer" }}
@@ -739,8 +954,8 @@ async function handleScan() {
                 </div>
               </div>
             )}
+          </div>  
         </div>
-      </div>
       ) : (
         /* ── SCAN INPUT VIEW ── */
         <>

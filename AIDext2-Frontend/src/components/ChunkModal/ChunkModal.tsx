@@ -225,10 +225,10 @@ function BinaryPieBlock({
           },
         ]}
         width={300}
-        height={180}
+        height={140}
         sx={{
           "& .MuiChartsLegend-root": {
-            transform: "translate(-5px) translateY(-30px)",
+            transform: "translate(-5px) translateY(10px)",
           },
         }}
       />

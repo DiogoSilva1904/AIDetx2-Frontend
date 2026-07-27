@@ -2,15 +2,17 @@ import { Gauge } from "@mui/x-charts/Gauge";
 
 interface Props {
     confidence: number;
+    width?: number;
+    height?: number;
 }
 
-export default function ConfidenceGauge({ confidence }: Props) {
+export default function ConfidenceGauge({ confidence, width = 210, height = 140 }: Props) {
     const value = Math.round(confidence * 100);
 
     return (
         <Gauge
-            width={240}
-            height={170}
+            width={width}
+            height={height}
             value={value}
             text={({ value }) => `${value}%`}
             startAngle={-110}

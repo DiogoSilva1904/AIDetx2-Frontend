@@ -8,6 +8,7 @@ import { AiOutlineCloudServer } from "react-icons/ai";
 
 
 const NAV_LINKS = [
+  { label: "Detector", to: "/" },
   { label: "Documentation", to: "/docs" },
   { label: "Models", to: "/models" },
 ];
@@ -20,9 +21,9 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="navbar-inner">
 
-        <a href="/" className="navbar-logo">
+        <Link to="/" className="navbar-logo">
           AIDetx<span className="navbar-logo-accent">2</span>
-        </a>
+        </Link>
 
         <div className="navbar-links">
           {/* Desktop links */}

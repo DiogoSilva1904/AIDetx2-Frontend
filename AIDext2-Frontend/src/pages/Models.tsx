@@ -2,11 +2,18 @@ import { useEffect, useState } from 'react'
 import './Models.css'
 
 
+interface SubNavItem {
+  id: string
+  label: string
+}
+
 interface NavItem {
   id: string
   label: string
   icon: string
+  children?: SubNavItem[]
 }
+
 
 const navGroups: { label: string; items: NavItem[] }[] = [
   {
@@ -20,7 +27,19 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Features',
     items: [
-      { id: 'extracted_features', label: 'Extracted features', icon: 'ti-tag' },
+      {
+        id: 'extracted_features',
+        label: 'Extracted features',
+        icon: 'ti-tag',
+        children: [
+          { id: 'feat-compression', label: 'Compression-Based' },
+          { id: 'feat-entropy', label: 'Entropy' },
+          { id: 'feat-lexical', label: 'Lexical Diversity' },
+          { id: 'feat-structural', label: 'Structural' },
+          { id: 'feat-repetition', label: 'Repetition' },
+          { id: 'feat-readability', label: 'Readability' },
+        ],
+      },
     ],
   },
 ]
@@ -29,12 +48,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
 export default function Models(){
     const [activeId, setActiveId] = useState('overview')
     useEffect(() => {
-        // 1. Define the observer to watch section visibility
         const observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
-            // If a section is in view (intersecting), set it as active
-            // threshold: 0.5 means when 50% of the section is visible
             if (entry.isIntersecting) {
                 setActiveId(entry.target.id)
             }
@@ -43,8 +59,8 @@ export default function Models(){
         { rootMargin: '-20% 0% -35% 0%', threshold: 0.2 }
         )
 
-        // 2. Observe all sections that have an ID
-        const sections = document.querySelectorAll('.docs-section')
+        // Observe top-level sections AND feature sub-sections
+        const sections = document.querySelectorAll('.docs-section, .docs-subsection')
         sections.forEach((section) => observer.observe(section))
 
         return () => {
@@ -53,24 +69,47 @@ export default function Models(){
     }, [])
     return (
         <div className="docs-shell">
-        <aside className="docs-sidebar">
-            {navGroups.map((group) => (
-            <div className="docs-nav-group" key={group.label}>
-                <div className="docs-nav-group-label">{group.label}</div>
+            <aside className="docs-sidebar">
+                {navGroups.map((group) => (
+                    <div className="docs-nav-group" key={group.label}>
+                    <div className="docs-nav-group-label">{group.label}</div>
 
-                {group.items.map((item) => (
-                <a
-                    key={item.id}
-                    href={`#${item.id}`}
-                    className={`docs-nav-item ${activeId === item.id ? 'active' : ''}`}
-                >
-                    <i className={`ti ${item.icon}`} aria-hidden="true" />
-                    {item.label}
-                </a>
+                    {group.items.map((item) => {
+                        const isParentActive =
+                        activeId === item.id ||
+                        item.children?.some((c) => c.id === activeId)
+
+                        return (
+                        <div key={item.id}>
+                            <a
+                            href={`#${item.id}`}
+                            className={`docs-nav-item ${isParentActive ? 'active' : ''}`}
+                            >
+                            <i className={`ti ${item.icon}`} aria-hidden="true" />
+                            {item.label}
+                            </a>
+
+                            {item.children && (
+                            <div className="docs-nav-subgroup">
+                                {item.children.map((child) => (
+                                <a
+                                    key={child.id}
+                                    href={`#${child.id}`}
+                                    className={`docs-nav-subitem ${
+                                    activeId === child.id ? 'active' : ''
+                                    }`}
+                                >
+                                    {child.label}
+                                </a>
+                                ))}
+                            </div>
+                            )}
+                        </div>
+                        )
+                    })}
+                    </div>
                 ))}
-            </div>
-            ))}
-        </aside>
+                </aside>
 
         <main className="docs-main">
 
@@ -81,12 +120,26 @@ export default function Models(){
             <h1 className="docs-title">Models</h1>
 
             <p className="docs-lead">
-                AIDetx2 offers different various depending in which the use case scenario is. 
-                There are 3 models: AI vs Human which allows to detect if a text is of Human or AI origin; 
-                Model Detection that given an AI text, it detects which model detected it; 
-                Human vs AI and Model Detection is a pipeline combining both the previous models doing both
-                things at once.
+                AIDetx2 provides three complementary models, each suited to a different
+                detection scenario:
             </p>
+
+            <ul className="docs-list">
+                <li>
+                <strong>AI vs Human</strong> — determines whether a given text was
+                written by a human or generated by an AI system.
+                </li>
+                <li>
+                <strong>Model Detection</strong> — given a text that is already known
+                to be AI-generated, identifies which specific model most likely
+                produced it.
+                </li>
+                <li>
+                <strong>AI vs Human + Model Detection (Pipeline)</strong> — combines
+                both models into a single pipeline: it first classifies the text's
+                origin, then, if it's AI-generated, identifies the source model.
+                </li>
+            </ul>
 
             <hr className="docs-divider" />
 
@@ -99,15 +152,39 @@ export default function Models(){
             <h1 className="docs-title">Machine Learning Models</h1>
 
             <p className="docs-lead">
-                write something
+                These models rely on the <a href="#extracted_features">extracted
+                features</a> below rather than raw text, feeding them into classical
+                machine learning classifiers. They tend to be lightweight, fast to run,
+                and easier to interpret than deep learning approaches. See the{' '}
+                <a href="#extracted_features">Extracted Features</a> section for the
+                full list and definitions of every feature used.
             </p>
 
             <hr className="docs-divider" />
 
-
-            <p className="docs-prose">
-                
-            </p>
+            <div className="docs-table-wrapper">
+                <table className="docs-table">
+                <thead>
+                    <tr>
+                    <th>Model</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {/* Example row — replace with your actual models */}
+                    <tr>
+                    <td>Random Forest</td>
+                    <td>Ensemble (bagging)</td>
+                    <td>
+                        Trained on the extracted feature set to classify text origin.
+                        Robust to noisy features and resistant to overfitting.
+                    </td>
+                    </tr>
+                    {/* Add one <tr> per model */}
+                </tbody>
+                </table>
+            </div>
 
             </section>
 
@@ -118,106 +195,342 @@ export default function Models(){
             <h1 className="docs-title">Deep Learning Models</h1>
 
             <p className="docs-lead">
-                write something
-            </p>
-
-            <hr className="docs-divider" />
-
-            <p className="docs-prose">
-        
-            </p>
-
-            </section>
-
-
-            <section className="docs-section" id="extracted_features">
-
-            <h1 className="docs-title">Extracted features</h1>
-
-            <p className="docs-lead">
-                write something
+                These models work directly on raw text rather than hand-crafted
+                features. They use transformer-based architectures fine-tuned for
+                detection, capturing contextual and semantic patterns that simpler
+                feature-based methods can miss.
             </p>
 
             <hr className="docs-divider" />
 
             <div className="docs-table-wrapper">
                 <table className="docs-table">
-                    <thead>
+                <thead>
                     <tr>
-                        <th>Feature</th>
-                        <th>Definition</th>
+                    <th>Model</th>
+                    <th>Base Architecture</th>
+                    <th>Description</th>
                     </tr>
-                    </thead>
-
-                    <tbody>
+                </thead>
+                <tbody>
                     <tr>
-                        <td>Entropy Ratio</td>
-                        <td>
-                        Measures the relationship between the observed entropy of a text and its
-                        maximum possible entropy. It helps evaluate how predictable or uniform
-                        the text distribution is, which can reveal AI-generated writing patterns.
-                        </td>
+                    <td>BERT-based Classifier</td>
+                    <td>BERT</td>
+                    <td>
+                        Fine-tuned on labeled human/AI text pairs to learn contextual
+                        patterns associated with each origin.
+                    </td>
                     </tr>
-
                     <tr>
-                        <td>Shannon Entropy</td>
-                        <td>
-                        Quantifies the amount of information and randomness present in the text
-                        based on character or token probability distributions. Lower entropy can
-                        indicate more repetitive or structured text generation.
-                        </td>
+                    <td>RoBERTa-based Classifier</td>
+                    <td>RoBERTa</td>
+                    <td>
+                        An optimized variant of BERT, trained with a larger corpus and
+                        refined pretraining procedure, generally offering improved
+                        accuracy on nuanced or shorter texts.
+                    </td>
                     </tr>
-
-                    <tr>
-                        <td>Average Word Length</td>
-                        <td>
-                        Computes the average number of characters per word within a text segment.
-                        This feature helps capture stylistic differences between writing sources.
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Lexical Richness</td>
-                        <td>
-                        Measures vocabulary diversity by analyzing the proportion of unique words
-                        relative to the total number of words. Human-written text generally
-                        exhibits higher lexical variation.
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Average Sentence Length</td>
-                        <td>
-                        Represents the average number of words per sentence in a segment.
-                        Variations in sentence length can reflect differences in writing style
-                        and text complexity.
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Punctuation Density</td>
-                        <td>
-                        Calculates the frequency of punctuation marks relative to the total text
-                        length. AI-generated text may present different punctuation usage
-                        patterns compared to human writing.
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <td>Repetition Rate</td>
-                        <td>
-                        Measures how frequently words or phrases are repeated within a text
-                        segment. High repetition rates can indicate limited variation and are
-                        often associated with generated content.
-                        </td>
-                    </tr>
-                    </tbody>
+                </tbody>
                 </table>
-                </div>
+            </div>
 
             </section>
+
+            {/* ───────────────── Extracted Features ───────────────── */}
+
+            <section id="extracted_features">
+
+                <h1 className="docs-title">Extracted Features</h1>
+
+                <p className="docs-lead">
+                    AIDetx2's <a href="#ml">Machine Learning models</a> operate on a set of
+                    23 statistical, structural, and information-theoretic features extracted
+                    from each text — these are the same features referenced in that section,
+                    grouped here by category with full definitions.
+                </p>
+
+                <hr className="docs-divider" />
+
+                {/* ───────────── Compression-Based Features ───────────── */}
+                <div className="docs-subsection" id="feat-compression">
+                <h2 className="docs-subtitle">Compression-Based Features</h2>
+                <p className="docs-prose">
+                    These features exploit the idea that predictable, low-entropy text (often
+                    a signature of AI generation) compresses more efficiently than genuinely
+                    novel human writing.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>compression_ratio_1</code></td>
+                        <td>
+                            Ratio of compressed to original size using Zstandard. Lower
+                            values indicate more predictable, repetitive text.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>perplexity_1</code></td>
+                        <td>
+                            Approximates language-model perplexity from the compression
+                            ratio: harder-to-compress text is treated as less predictable
+                            and given a higher perplexity score.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>ncd_human</code> / <code>ncd_ai</code></td>
+                        <td>
+                            Normalized Compression Distance between the text and a reference
+                            human or AI corpus. Computed as{' '}
+                            <code>(C(ref+text) - min(C(ref), C(text))) / max(C(ref), C(text))</code>,
+                            using LZMA compression. Lower values mean the text compresses
+                            similarly to that reference corpus, i.e. is more "similar" to it.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>ncd_diff</code></td>
+                        <td>
+                            Difference between <code>ncd_human</code> and <code>ncd_ai</code>,
+                            giving a signed measure of which reference corpus the text is
+                            closer to.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>ncsd_human</code> / <code>ncsd_ai</code></td>
+                        <td>
+                            Normalized Conditional Sufficient Distance:{' '}
+                            <code>(C(text+ref) - C(text)) / C(ref)</code>. Measures how much
+                            additional information the reference corpus contributes when
+                            compressed together with the text. Lower values indicate the
+                            reference explains the text well.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>ncsd_diff</code></td>
+                        <td>
+                            Difference between <code>ncsd_human</code> and{' '}
+                            <code>ncsd_ai</code>, indicating which reference corpus better
+                            "explains" the text.
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+
+                {/* ───────────── Entropy Features ───────────── */}
+                <div className="docs-subsection" id="feat-entropy">
+                <h2 className="docs-subtitle">Entropy Features</h2>
+                <p className="docs-prose">
+                    Character-level information measures that capture randomness and
+                    predictability in the text.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>shannon_entropy</code></td>
+                        <td>
+                            Character-level Shannon entropy, computed from the probability
+                            distribution of characters in the text. Lower entropy suggests
+                            more repetitive or structured character usage.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>entropy_ratio_1</code></td>
+                        <td>
+                            Ratio between a compression-based entropy estimate and the
+                            Shannon entropy of the text. Captures how much of the text's
+                            theoretical randomness is actually "used".
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+
+                {/* ───────────── Lexical Diversity Features ───────────── */}
+                <div className="docs-subsection" id="feat-lexical">
+                <h2 className="docs-subtitle">Lexical Diversity Features</h2>
+                <p className="docs-prose">
+                    These features describe vocabulary range and word choice, which tend to
+                    differ between human and AI-generated writing.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>lexical_richness</code></td>
+                        <td>
+                            Ratio of unique words to total words (type-token ratio). Human
+                            text typically shows greater lexical variation.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>lexical_density</code></td>
+                        <td>
+                            Ratio of content words (excluding common function words like
+                            "the", "is", "and") to total words. Higher values can indicate
+                            more formal, information-dense writing.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>hapax_ratio</code></td>
+                        <td>
+                            Ratio of words that appear exactly once in the text. Lower
+                            values can indicate a narrower, "safer" vocabulary, common in
+                            AI-generated text.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>uncommon_word_ratio</code></td>
+                        <td>
+                            Ratio of words with low frequency in general English usage
+                            (via <code>wordfreq</code>), below a fixed threshold. AI text
+                            tends to favor common vocabulary.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>vocabulary_richness_per100</code></td>
+                        <td>
+                            Number of unique words within the first 100 tokens of the text.
+                            More stable across texts of varying length than a raw
+                            type-token ratio.
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+
+                {/* ───────────── Structural Features ───────────── */}
+                <div className="docs-subsection" id="feat-structural">
+                <h2 className="docs-subtitle">Structural Features</h2>
+                <p className="docs-prose">
+                    Sentence- and character-level structural patterns.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>avg_sentence_length</code></td>
+                        <td>Average number of words per sentence in the text.</td>
+                        </tr>
+                        <tr>
+                        <td><code>sentence_length_variance</code></td>
+                        <td>
+                            Variance in sentence length across the text. AI-generated text
+                            tends to have lower variance, i.e. more uniform sentence
+                            structure.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>punctuation_density</code></td>
+                        <td>
+                            Ratio of punctuation characters to total character count.
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+
+                {/* ───────────── Repetition Features ───────────── */}
+                <div className="docs-subsection" id="feat-repetition">
+                <h2 className="docs-subtitle">Repetition Features</h2>
+                <p className="docs-prose">
+                    Measures of word- and phrase-level repetition, often elevated in
+                    generated text.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>repetition_rate</code></td>
+                        <td>Ratio of repeated words (appearing more than once) to total words.</td>
+                        </tr>
+                        <tr>
+                        <td><code>bigram_repetition_rate</code></td>
+                        <td>
+                            Ratio of repeated word-pairs (bigrams) to total bigrams,
+                            capturing phrase-level rather than single-word repetition.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>burstiness</code></td>
+                        <td>
+                            Measures how clustered vs. uniformly distributed word
+                            repetitions are across the text, computed from the standard
+                            deviation and mean of the gaps between repeated word
+                            occurrences. Human text tends to be more "bursty".
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+
+                {/* ───────────── Readability Features ───────────── */}
+                <div className="docs-subsection" id="feat-readability">
+                <h2 className="docs-subtitle">Readability Features</h2>
+                <p className="docs-prose">
+                    Standard readability metrics computed via <code>textstat</code>.
+                </p>
+
+                <div className="docs-table-wrapper">
+                    <table className="docs-table">
+                    <thead>
+                        <tr><th>Feature</th><th>Definition</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                        <td><code>flesch_reading_ease</code></td>
+                        <td>
+                            Flesch Reading Ease score, based on sentence length and
+                            syllable count. Higher scores indicate easier-to-read text.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>gunning_fog</code></td>
+                        <td>
+                            Gunning Fog index, estimating the years of formal education
+                            needed to understand the text on a first reading.
+                        </td>
+                        </tr>
+                        <tr>
+                        <td><code>smog_index</code></td>
+                        <td>
+                            SMOG readability index, estimating years of education required
+                            to understand the text, based on polysyllabic word counts.
+                        </td>
+                        </tr>
+                    </tbody>
+                    </table>
+                </div>
+                </div>
+            </section>
         </main>
-        </div>
+    </div>
 
     )
 
