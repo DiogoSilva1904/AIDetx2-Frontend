@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Navbar.css";
 import { useMode } from "../../context/ModeContext";
 import { GrPersonalComputer } from "react-icons/gr";
@@ -16,6 +16,11 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { useLocal, setUseLocal } = useMode();
+  const location = useLocation();
+
+  const isActive = (to: string) =>
+    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+
 
   return (
     <nav className="navbar">
@@ -28,7 +33,7 @@ export default function Navbar() {
         <div className="navbar-links">
           {/* Desktop links */}
           {NAV_LINKS.map((link) => (
-            <Link key={link.label} to={link.to} className="navbar-link">
+            <Link key={link.label} to={link.to} className={`navbar-link ${isActive(link.to) ? "active" : ""}`}>
               {link.label}
             </Link>
           ))}
@@ -72,7 +77,7 @@ export default function Navbar() {
       {menuOpen && (
         <div className="navbar-mobile-menu">
           {NAV_LINKS.map((link) => (
-            <Link key={link.label} to={link.to} className="navbar-link">
+            <Link key={link.label} to={link.to} className={`navbar-link ${isActive(link.to) ? "active" : ""}`}>
               {link.label}
             </Link>
           ))}
